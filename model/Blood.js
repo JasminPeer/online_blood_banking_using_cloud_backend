@@ -1,14 +1,12 @@
-// models/Blood.js
 import mongoose from "mongoose";
 
 const bloodSchema = new mongoose.Schema(
   {
     bloodGroup: { type: String, required: true, unique: true },
-    units: { type: Number, required: true, default: 0 },
-    expiryDays: { type: Number, required: true, default: 30 }, // days until expiry
+    units: { type: Number, default: 0 },
+    expiryDays: { type: Number, default: 30 }
   },
   { timestamps: true }
 );
 
-const Blood = mongoose.model("Blood", bloodSchema);
-export default Blood;
+export default mongoose.model("Blood", bloodSchema);
