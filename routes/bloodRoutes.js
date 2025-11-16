@@ -1,40 +1,39 @@
-// routes/BloodRoutes.js
 import express from "express";
 import Blood from "../model/Blood.js";
 
 const router = express.Router();
 
-// GET /api/blood - fetch all blood stock
+// Get full blood stock
 router.get("/", async (req, res) => {
   try {
-    const bloodStock = await Blood.find().sort({ bloodGroup: 1 }); // sort by blood group
-    res.json(bloodStock);
+    const stock = await Blood.find().sort({ bloodGroup: 1 });
+    res.json(stock);
   } catch (err) {
-    console.error("Error fetching blood stock:", err);
-    res.status(500).json({ message: "Server error fetching blood stock" });
+    res.status(500).json({ message: "Error fetching stock" });
   }
 });
 
-// POST /api/blood - add/update blood stock (admin)
-router.post("/", async (req, res) => {
+// Hospital request blood
+router.post("/request", async (req, res) => {
   try {
-    const { bloodGroup, units, expiryDays } = req.body;
-    let blood = await Blood.findOne({ bloodGroup });
+    const { bloodGroup, unitsNeeded } = req.body;
+    let stock = await Blood.findOne({ bloodGroup });
 
-    if (blood) {
-      // Update existing
-      blood.units = units;
-      blood.expiryDays = expiryDays;
-    } else {
-      // Create new
-      blood = new Blood({ bloodGroup, units, expiryDays });
+    if (!stock || stock.units < unitsNeeded) {
+      return res.status(400).json({ message: "Not enough units available" });
     }
 
-    await blood.save();
-    res.status(201).json(blood);
+    stock.units -= unitsNeeded;
+
+    if (stock.units === 0) {
+      await Blood.deleteOne({ bloodGroup });
+    } else {
+      await stock.save();
+    }
+
+    res.json({ message: "Blood issued successfully" });
   } catch (err) {
-    console.error("Error saving blood stock:", err);
-    res.status(500).json({ message: "Server error saving blood stock" });
+    res.status(500).json({ message: "Error issuing blood" });
   }
 });
 
